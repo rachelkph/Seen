@@ -24,11 +24,13 @@ import { useUserData } from '@/lib/hooks/useUserData';
 import { getProfileInsights, ProfileInsights } from '@/lib/profile-insights';
 import { User, Activity } from '@/types';
 import { shareProfileLink } from '@/lib/links';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const isDesktop = useIsDesktop();
 
   // Use cached user data hook for profile, stats, follow counts, and ranking position
   const {
@@ -200,7 +202,8 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>Seen</Text>
+          {/* The desktop sidebar already shows the Seen wordmark */}
+          {!isDesktop && <Text style={styles.headerTitle}>Seen</Text>}
           <Text style={styles.headerSubtitle}>YOUR PROFILE</Text>
         </View>
         <View style={styles.headerActions}>
@@ -248,237 +251,243 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Profile Section - Horizontal Layout */}
-        <View style={styles.profileSection}>
-          {/* Left: Poster + @username */}
-          <Pressable
-            style={styles.avatarWrapper}
-            onPress={() => router.push('/edit-profile')}
-          >
-            <View style={styles.avatarContainer}>
-              <ProfileAvatar
-                imageUrl={profileData?.profile_image_url || cachedProfile?.profile_image_url}
-                username={profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'User'}
-                size="large"
-                variant="poster"
-              />
-              <View style={styles.editBadge}>
-                <IconSymbol name="pencil" size={12} color={Colors.paper} />
-              </View>
-            </View>
-            <Text style={styles.usernameUnderAvatar}>
-              @{profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'user'}
-            </Text>
-          </Pressable>
-
-          {/* Right: Your Name, Bio, Follow Stats */}
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {profileData?.display_name || cachedProfile?.display_name || profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'Cinephile'}
-            </Text>
-            <Text style={styles.profileBio}>
-              {profileData?.bio || cachedProfile?.bio || 'Film Enthusiast'}
-            </Text>
-            <View style={styles.followStats}>
+        {/* Wide-screen web: profile, stats, lists and taste on the left; activity on the right */}
+        <View style={isDesktop ? styles.desktopColumns : undefined}>
+          <View style={isDesktop ? styles.desktopSideColumn : undefined}>
+            {/* Profile Section - Horizontal Layout */}
+            <View style={styles.profileSection}>
+              {/* Left: Poster + @username */}
               <Pressable
-                style={({ pressed }) => [
-                  styles.followStat,
-                  pressed && styles.followStatPressed,
-                ]}
-                onPress={() =>
-                  router.push({
-                    pathname: '/follow-list',
-                    params: { type: 'following', userId: user?.id },
-                  })
-                }
+                style={styles.avatarWrapper}
+                onPress={() => router.push('/edit-profile')}
               >
-                <Text style={styles.followNumber}>{followCounts.following}</Text>
-                <Text style={styles.followLabel}>Following</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.followStat,
-                  pressed && styles.followStatPressed,
-                ]}
-                onPress={() =>
-                  router.push({
-                    pathname: '/follow-list',
-                    params: { type: 'followers', userId: user?.id },
-                  })
-                }
-              >
-                <Text style={styles.followNumber}>{followCounts.followers}</Text>
-                <Text style={styles.followLabel}>Followers</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{localStats.totalMovies}</Text>
-            <Text style={styles.statLabel}>FILMS</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{localStats.totalShows}</Text>
-            <Text style={styles.statLabel}>SHOWS</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>
-              {cachedStats.totalMinutes > 0 ? formatWatchTime(cachedStats.totalMinutes) : '—'}
-            </Text>
-            <Text style={styles.statLabel}>WATCHED</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>
-              {rankingPosition ? `#${rankingPosition}` : '—'}
-            </Text>
-            <Text style={styles.statLabel}>RANKED</Text>
-          </View>
-        </View>
-
-        {/* Lists */}
-        <View style={styles.listsSection}>
-          <Text style={styles.sectionLabel}>LISTS</Text>
-          <ProfileListRow
-            title="Rankings"
-            count={cachedStats.rankingsCount}
-            onPress={() => router.push('/rankings')}
-            icon="list.number"
-          />
-          <ProfileListRow
-            title="Want to Watch"
-            count={watchlistCount}
-            onPress={() => router.push('/watchlist')}
-            icon="bookmark"
-          />
-          <ProfileListRow
-            title="Currently Watching"
-            count={currentlyWatchingCount}
-            onPress={() => router.push('/currently-watching')}
-            icon="play.circle"
-          />
-        </View>
-
-        {/* Your Taste - Genre Chart & Fun Stats */}
-        {insights && insights.topGenres.length > 0 && (
-          <View style={styles.insightsSection}>
-            <View style={styles.insightsDivider} />
-            <View style={styles.insightsContent}>
-              <Text style={styles.sectionLabel}>YOUR TASTE</Text>
-
-              {/* Genre Chart */}
-              <View style={styles.genreChart}>
-                {insights.topGenres.map((genre) => (
-                  <View key={genre.genre} style={styles.genreRow}>
-                    <Text style={styles.genreLabel} numberOfLines={1}>
-                      {genre.genre}
-                    </Text>
-                    <View style={styles.genreBarContainer}>
-                      <View
-                        style={[
-                          styles.genreBar,
-                          { width: `${genre.percentage}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.genreCount}>{genre.count}</Text>
+                <View style={styles.avatarContainer}>
+                  <ProfileAvatar
+                    imageUrl={profileData?.profile_image_url || cachedProfile?.profile_image_url}
+                    username={profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'User'}
+                    size="large"
+                    variant="poster"
+                  />
+                  <View style={styles.editBadge}>
+                    <IconSymbol name="pencil" size={12} color={Colors.paper} />
                   </View>
-                ))}
-              </View>
+                </View>
+                <Text style={styles.usernameUnderAvatar}>
+                  @{profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'user'}
+                </Text>
+              </Pressable>
 
-              {/* Fun Facts List */}
-              {(insights.topDirector || insights.topActor || insights.favoriteDecade) && (
-                <View style={styles.funFactsList}>
-                  {insights.topDirector && (
-                    <View style={styles.funFactRow}>
-                      <Text style={styles.funFactLabel}>FAVE DIRECTOR</Text>
-                      <Text style={styles.funFactValue}>
-                        {insights.topDirector.name}
-                      </Text>
-                    </View>
-                  )}
-                  {insights.topActor && (
-                    <View style={styles.funFactRow}>
-                      <Text style={styles.funFactLabel}>FAVE ACTOR</Text>
-                      <Text style={styles.funFactValue}>
-                        {insights.topActor.name}
-                      </Text>
-                    </View>
-                  )}
-                  {insights.favoriteDecade && (
-                    <View style={styles.funFactRow}>
-                      <Text style={styles.funFactLabel}>FAVE ERA</Text>
-                      <Text style={styles.funFactValue}>
-                        {insights.favoriteDecade.decade}
-                      </Text>
+              {/* Right: Your Name, Bio, Follow Stats */}
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {profileData?.display_name || cachedProfile?.display_name || profileData?.username || cachedProfile?.username || user?.user_metadata?.username || 'Cinephile'}
+                </Text>
+                <Text style={styles.profileBio}>
+                  {profileData?.bio || cachedProfile?.bio || 'Film Enthusiast'}
+                </Text>
+                <View style={styles.followStats}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.followStat,
+                      pressed && styles.followStatPressed,
+                    ]}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/follow-list',
+                        params: { type: 'following', userId: user?.id },
+                      })
+                    }
+                  >
+                    <Text style={styles.followNumber}>{followCounts.following}</Text>
+                    <Text style={styles.followLabel}>Following</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.followStat,
+                      pressed && styles.followStatPressed,
+                    ]}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/follow-list',
+                        params: { type: 'followers', userId: user?.id },
+                      })
+                    }
+                  >
+                    <Text style={styles.followNumber}>{followCounts.followers}</Text>
+                    <Text style={styles.followLabel}>Followers</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+
+            {/* Stats */}
+            <View style={styles.statsContainer}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{localStats.totalMovies}</Text>
+                <Text style={styles.statLabel}>FILMS</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{localStats.totalShows}</Text>
+                <Text style={styles.statLabel}>SHOWS</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>
+                  {cachedStats.totalMinutes > 0 ? formatWatchTime(cachedStats.totalMinutes) : '—'}
+                </Text>
+                <Text style={styles.statLabel}>WATCHED</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>
+                  {rankingPosition ? `#${rankingPosition}` : '—'}
+                </Text>
+                <Text style={styles.statLabel}>RANKED</Text>
+              </View>
+            </View>
+
+            {/* Lists */}
+            <View style={styles.listsSection}>
+              <Text style={styles.sectionLabel}>LISTS</Text>
+              <ProfileListRow
+                title="Rankings"
+                count={cachedStats.rankingsCount}
+                onPress={() => router.push('/rankings')}
+                icon="list.number"
+              />
+              <ProfileListRow
+                title="Want to Watch"
+                count={watchlistCount}
+                onPress={() => router.push('/watchlist')}
+                icon="bookmark"
+              />
+              <ProfileListRow
+                title="Currently Watching"
+                count={currentlyWatchingCount}
+                onPress={() => router.push('/currently-watching')}
+                icon="play.circle"
+              />
+            </View>
+
+            {/* Your Taste - Genre Chart & Fun Stats */}
+            {insights && insights.topGenres.length > 0 && (
+              <View style={styles.insightsSection}>
+                <View style={styles.insightsDivider} />
+                <View style={styles.insightsContent}>
+                  <Text style={styles.sectionLabel}>YOUR TASTE</Text>
+
+                  {/* Genre Chart */}
+                  <View style={styles.genreChart}>
+                    {insights.topGenres.map((genre) => (
+                      <View key={genre.genre} style={styles.genreRow}>
+                        <Text style={styles.genreLabel} numberOfLines={1}>
+                          {genre.genre}
+                        </Text>
+                        <View style={styles.genreBarContainer}>
+                          <View
+                            style={[
+                              styles.genreBar,
+                              { width: `${genre.percentage}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.genreCount}>{genre.count}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Fun Facts List */}
+                  {(insights.topDirector || insights.topActor || insights.favoriteDecade) && (
+                    <View style={styles.funFactsList}>
+                      {insights.topDirector && (
+                        <View style={styles.funFactRow}>
+                          <Text style={styles.funFactLabel}>FAVE DIRECTOR</Text>
+                          <Text style={styles.funFactValue}>
+                            {insights.topDirector.name}
+                          </Text>
+                        </View>
+                      )}
+                      {insights.topActor && (
+                        <View style={styles.funFactRow}>
+                          <Text style={styles.funFactLabel}>FAVE ACTOR</Text>
+                          <Text style={styles.funFactValue}>
+                            {insights.topActor.name}
+                          </Text>
+                        </View>
+                      )}
+                      {insights.favoriteDecade && (
+                        <View style={styles.funFactRow}>
+                          <Text style={styles.funFactLabel}>FAVE ERA</Text>
+                          <Text style={styles.funFactValue}>
+                            {insights.favoriteDecade.decade}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
-              )}
-            </View>
-            <View style={styles.insightsDivider} />
-          </View>
-        )}
-
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>RECENT ACTIVITY</Text>
-            {recentActivities.length > 0 && (
-              <Pressable onPress={() => router.push(`/user-activity/${user?.id}`)}>
-                <Text style={styles.viewAll}>VIEW ALL</Text>
-              </Pressable>
+                <View style={styles.insightsDivider} />
+              </View>
             )}
           </View>
 
-          {recentActivities.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.recentScroll}
-            >
-              {recentActivities.map((activity) => (
-                <Pressable
-                  key={activity.id}
-                  style={({ pressed }) => [
-                    styles.recentCard,
-                    pressed && styles.cardPressed,
-                  ]}
-                  onPress={() => router.push(`/title/${activity.content?.tmdb_id}?type=${activity.content?.content_type}` as any)}
-                >
-                  {activity.content?.poster_url ? (
-                    <Image
-                      source={{ uri: activity.content.poster_url }}
-                      style={styles.recentPoster}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <View style={[styles.recentPoster, styles.posterPlaceholder]}>
-                      <Text style={styles.placeholderLetter}>
-                        {activity.content?.title?.[0] || '?'}
-                      </Text>
-                    </View>
-                  )}
-                  {activity.star_rating && (
-                    <View style={styles.recentStars}>
-                      <StarDisplay rating={activity.star_rating} size={10} />
-                    </View>
-                  )}
+          {/* Recent Activity */}
+          <View style={[styles.section, isDesktop && styles.desktopMainColumn]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>RECENT ACTIVITY</Text>
+              {recentActivities.length > 0 && (
+                <Pressable onPress={() => router.push(`/user-activity/${user?.id}`)}>
+                  <Text style={styles.viewAll}>VIEW ALL</Text>
                 </Pressable>
-              ))}
-            </ScrollView>
-          ) : (
-            <View style={styles.placeholder}>
-              <Text style={styles.placeholderText}>
-                Your recent activity will appear here
-              </Text>
+              )}
             </View>
-          )}
+
+            {recentActivities.length > 0 ? (
+              <ScrollView
+                horizontal={!isDesktop}
+                scrollEnabled={!isDesktop}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={[styles.recentScroll, isDesktop && styles.recentGrid]}
+              >
+                {recentActivities.map((activity) => (
+                  <Pressable
+                    key={activity.id}
+                    style={({ pressed }) => [
+                      styles.recentCard,
+                      pressed && styles.cardPressed,
+                    ]}
+                    onPress={() => router.push(`/title/${activity.content?.tmdb_id}?type=${activity.content?.content_type}` as any)}
+                  >
+                    {activity.content?.poster_url ? (
+                      <Image
+                        source={{ uri: activity.content.poster_url }}
+                        style={styles.recentPoster}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View style={[styles.recentPoster, styles.posterPlaceholder]}>
+                        <Text style={styles.placeholderLetter}>
+                          {activity.content?.title?.[0] || '?'}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.star_rating && (
+                      <View style={styles.recentStars}>
+                        <StarDisplay rating={activity.star_rating} size={10} />
+                      </View>
+                    )}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.placeholder}>
+                <Text style={styles.placeholderText}>
+                  Your recent activity will appear here
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
       </ScrollView>
@@ -665,6 +674,21 @@ const styles = StyleSheet.create({
   recentScroll: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.md,
+  },
+  recentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  desktopColumns: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  desktopSideColumn: {
+    width: 440,
+  },
+  desktopMainColumn: {
+    flex: 1,
+    minWidth: 0,
   },
   recentCard: {
     width: 80,

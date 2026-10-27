@@ -19,9 +19,11 @@ import { supabase } from '@/lib/supabase';
 import { getUnreadNotificationCount } from '@/lib/social';
 import { useFeed } from '@/lib/hooks/useFeed';
 import { Activity } from '@/types';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
+  const isDesktop = useIsDesktop();
   const router = useRouter();
   const navigation = useNavigation();
   const { user } = useAuth();
@@ -144,7 +146,8 @@ export default function FeedScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.title}>Seen</Text>
+          {/* On desktop the sidebar already shows the wordmark */}
+          {!isDesktop && <Text style={styles.title}>Seen</Text>}
           <Text style={styles.feedLabel}>YOUR FEED</Text>
         </View>
         <View style={styles.headerRight}>

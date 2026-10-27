@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { Stack, useRouter, useSegments, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -30,6 +30,7 @@ import { CacheProvider } from '@/lib/cache-context';
 import { useAppUpdate } from '@/lib/hooks/useAppUpdate';
 import { UpdatePromptModal } from '@/components/update-prompt-modal';
 import { PhoneWidthFrame } from '@/components/phone-width-frame';
+import { DesktopDialog } from '@/components/desktop-dialog';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Platform } from 'react-native';
@@ -63,9 +64,22 @@ const DESKTOP_PAGE_STYLE = {
   borderRightWidth: 1,
   borderColor: Colors.borderLight,
 } as const;
+// The title page puts poster and details side by side on wide screens, so it gets a wider column.
+const DESKTOP_WIDE_PAGE_STYLE = { ...DESKTOP_PAGE_STYLE, maxWidth: 1040 } as const;
+
+// Modal screens: a sheet sliding up on phones; a centered dialog over the dimmed page on wide screens.
+const SHEET_OPTIONS = { presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 250 } as const;
+const DESKTOP_DIALOG_OPTIONS = {
+  presentation: 'transparentModal',
+  animation: 'fade',
+  animationDuration: 150,
+  contentStyle: { backgroundColor: 'transparent' },
+} as const;
+const DIALOG_ROUTES = new Set(['review/[movieId]', 'rank/[movieId]', 'edit-profile', 'follow-list', 'friend-picker', 'create-list']);
 
 function RootLayoutNav() {
   const isDesktop = useIsDesktop();
+  const modalOptions = isDesktop ? DESKTOP_DIALOG_OPTIONS : SHEET_OPTIONS;
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -212,6 +226,7 @@ function RootLayoutNav() {
   const navigator = (
     <>
       <Stack
+        screenLayout={isDesktop ? renderDesktopDialog : undefined}
         screenOptions={{
           headerShown: false,
           // Wide-screen web: pages outside the tabs (title, settings, ...) sit in a centered column.
@@ -223,6 +238,10 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ contentStyle: { backgroundColor: Colors.background } }} />
         <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: Colors.background } }} />
         <Stack.Screen
+          name="title/[id]"
+          options={isDesktop ? { contentStyle: DESKTOP_WIDE_PAGE_STYLE } : {}}
+        />
+        <Stack.Screen
           name="movie/[id]"
           options={{
             presentation: 'card',
@@ -231,35 +250,19 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="review/[movieId]"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="rank/[movieId]"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="edit-profile"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="follow-list"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="user/[id]"
@@ -270,11 +273,7 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="friend-picker"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="review-detail/[id]"
@@ -313,11 +312,7 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="create-list"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            animationDuration: 250,
-          }}
+          options={modalOptions}
         />
         <Stack.Screen
           name="user-activity/[userId]"
@@ -342,6 +337,12 @@ function RootLayoutNav() {
 
   if (Platform.OS !== 'web') return navigator;
   return <ThemeProvider value={WEB_NAV_THEME}>{navigator}</ThemeProvider>;
+}
+
+// Wraps modal routes in a centered dialog on wide screens; other screens render as they are.
+function renderDesktopDialog({ route, navigation, children }: { route: { name: string }; navigation: { goBack: () => void }; children: ReactElement }) {
+  if (!DIALOG_ROUTES.has(route.name)) return children;
+  return <DesktopDialog onDismiss={() => navigation.goBack()}>{children}</DesktopDialog>;
 }
 
 export default Sentry.wrap(function RootLayout() {
