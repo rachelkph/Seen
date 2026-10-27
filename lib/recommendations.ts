@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Movie, Content } from '@/types';
 import { discoverMoviesByGenres, GENRE_IDS } from './tmdb';
+import { createNotification } from './social';
 
 // Map genre strings to TMDB genre IDs
 const GENRE_STRING_TO_ID: Record<string, number> = {
@@ -84,6 +85,41 @@ export async function getRecommendedContent(userId: string): Promise<Movie[]> {
 
   // 6. Filter out content user has already watched
   return recommendations.filter((movie) => !watchedTmdbIds.has(movie.id));
+}
+
+// Send a movie/show recommendation to one or more friends
+export async function sendRecommendations(
+  senderId: string,
+  recipientIds: string[],
+  contentId: number,
+  message?: string
+): Promise<{ successCount: number; failureCount: number }> {
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (const recipientId of recipientIds) {
+    const { data: recId, error } = await supabase.rpc('send_recommendation', {
+      p_recipient_id: recipientId,
+      p_content_id: contentId,
+      p_message: message || null,
+    });
+
+    if (error || !recId) {
+      failureCount++;
+      continue;
+    }
+
+    await createNotification({
+      user_id: recipientId,
+      actor_id: senderId,
+      type: 'recommendation',
+      review_id: recId as string,
+    });
+
+    successCount++;
+  }
+
+  return { successCount, failureCount };
 }
 
 // Get user's top genres based on watch history

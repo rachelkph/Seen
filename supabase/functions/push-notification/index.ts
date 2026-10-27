@@ -8,7 +8,7 @@ interface NotificationRecord {
   id: string;
   user_id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'tagged' | 'follow' | 'reply';
+  type: 'like' | 'comment' | 'tagged' | 'follow' | 'reply' | 'recommendation';
   review_id?: string;
   comment_id?: string;
   created_at: string;
@@ -71,18 +71,32 @@ Deno.serve(async (req) => {
     let activityStatus = '';
 
     if (notification.review_id) {
-      // Try activity_log first (new system)
-      const { data: activity } = await supabase
-        .from('activity_log')
-        .select('status, content:content(tmdb_id, title, content_type)')
-        .eq('id', notification.review_id)
-        .single();
+      if (notification.type === 'recommendation') {
+        const { data: rec } = await supabase
+          .from('recommendations')
+          .select('content:content_id(tmdb_id, title, content_type)')
+          .eq('id', notification.review_id)
+          .single();
 
-      if (activity?.content) {
-        contentTitle = (activity.content as any).title || '';
-        contentType = (activity.content as any).content_type || '';
-        tmdbId = String((activity.content as any).tmdb_id || '');
-        activityStatus = activity.status || '';
+        if (rec?.content) {
+          contentTitle = (rec.content as any).title || '';
+          contentType = (rec.content as any).content_type || '';
+          tmdbId = String((rec.content as any).tmdb_id || '');
+        }
+      } else {
+        // Try activity_log (new system)
+        const { data: activity } = await supabase
+          .from('activity_log')
+          .select('status, content:content(tmdb_id, title, content_type)')
+          .eq('id', notification.review_id)
+          .single();
+
+        if (activity?.content) {
+          contentTitle = (activity.content as any).title || '';
+          contentType = (activity.content as any).content_type || '';
+          tmdbId = String((activity.content as any).tmdb_id || '');
+          activityStatus = activity.status || '';
+        }
       }
     }
 
@@ -185,6 +199,13 @@ function buildNotificationMessage(
           ? `${actorName} replied to your comment on ${contentTitle}`
           : `${actorName} replied to your comment`,
       };
+    case 'recommendation':
+      return {
+        title: 'New Recommendation',
+        body: contentTitle
+          ? `${actorName} recommended ${contentTitle} to you`
+          : `${actorName} sent you a recommendation`,
+      };
     default:
       return {
         title: 'Seen',
@@ -213,6 +234,13 @@ function buildNavigationData(
       return {
         type: 'follow',
         targetId: notification.actor_id,
+        notificationId: notification.id,
+      };
+    case 'recommendation':
+      return {
+        type: 'recommendation',
+        targetId: tmdbId,
+        contentType: contentType,
         notificationId: notification.id,
       };
     default:

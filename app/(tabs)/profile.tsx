@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  Share,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
@@ -162,6 +163,13 @@ export default function ProfileScreen() {
     setIsRefreshing(false);
   };
 
+  const handleShareProfile = async () => {
+    if (!user) return;
+    await Share.share({
+      message: `seen://user/${user.id}`,
+    });
+  };
+
   const dismissFeedbackNudge = async () => {
     await AsyncStorage.setItem('feedback_prompted', 'true');
     setShowFeedbackNudge(false);
@@ -197,11 +205,18 @@ export default function ProfileScreen() {
           <Text style={styles.headerTitle}>Seen</Text>
           <Text style={styles.headerSubtitle}>YOUR PROFILE</Text>
         </View>
-        <Pressable style={styles.iconButton} onPress={() => router.push('/settings')}>
-          <View style={styles.settingsIcon}>
-            <IconSymbol name="gearshape" size={18} color={Colors.textMuted} />
-          </View>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.iconButton} onPress={handleShareProfile}>
+            <View style={styles.settingsIcon}>
+              <IconSymbol name="square.and.arrow.up" size={18} color={Colors.textMuted} />
+            </View>
+          </Pressable>
+          <Pressable style={styles.iconButton} onPress={() => router.push('/settings')}>
+            <View style={styles.settingsIcon}>
+              <IconSymbol name="gearshape" size={18} color={Colors.textMuted} />
+            </View>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -502,6 +517,11 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: Spacing.xs,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   settingsIcon: {
     width: 32,

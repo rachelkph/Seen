@@ -296,8 +296,8 @@ export interface Notification {
   id: string;
   user_id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'tagged' | 'follow' | 'reply';
-  review_id?: string; // Maps to activity_log.id
+  type: 'like' | 'comment' | 'tagged' | 'follow' | 'reply' | 'recommendation';
+  review_id?: string; // Maps to activity_log.id or recommendations.id
   comment_id?: string;
   read: boolean;
   created_at: string;

@@ -23,6 +23,7 @@ import { StarDisplay } from '@/components/ui/star-display';
 import { CastCrewSection } from '@/components/cast-crew-section';
 import { FriendChipsDisplay } from '@/components/friend-chips';
 import { AddToListModal } from '@/components/add-to-list-modal';
+import { RecommendModal } from '@/components/recommend-modal';
 import { ProfileAvatar } from '@/components/profile-avatar';
 import { getMovieDetails, getTVShowDetails, getSimilarMovies, getSimilarTVShows, getMovieVideos, getTVShowVideos } from '@/lib/tmdb';
 import { HorizontalMovieRow } from '@/components/horizontal-movie-row';
@@ -107,6 +108,9 @@ export default function TitleDetailScreen() {
 
   // Add to list modal
   const [showAddToListModal, setShowAddToListModal] = useState(false);
+
+  // Recommend modal
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
 
   // Season ratings (TV shows only)
   const [seasonRatings, setSeasonRatings] = useState<SeasonRating[]>([]);
@@ -621,6 +625,16 @@ export default function TitleDetailScreen() {
                   color={Colors.stamp}
                 />
               </Pressable>
+              <Pressable
+                onPress={() => setShowRecommendModal(true)}
+                style={styles.recommendButtonInline}
+              >
+                <IconSymbol
+                  name="person.crop.circle.badge.plus"
+                  size={22}
+                  color={Colors.stamp}
+                />
+              </Pressable>
             </View>
           </View>
 
@@ -1064,6 +1078,17 @@ export default function TitleDetailScreen() {
         />
       )}
 
+      {/* Recommend Modal */}
+      {content && (
+        <RecommendModal
+          visible={showRecommendModal}
+          onClose={() => setShowRecommendModal(false)}
+          contentId={content.id}
+          contentType={contentType}
+          contentTitle={title}
+        />
+      )}
+
       {/* Friends Want to Watch Modal */}
       <Modal
         visible={showFriendsWatchlistModal}
@@ -1291,6 +1316,9 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   addToListButtonInline: {
+    padding: Spacing.xs,
+  },
+  recommendButtonInline: {
     padding: Spacing.xs,
   },
   metaRow: {
