@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { checkUsernameAvailable, getEmailStatus } from '@/lib/validation';
+import { authRedirectUrl } from '@/lib/links';
 
 const RESEND_COOLDOWN_MS = 60000; // 60 seconds
 
@@ -127,7 +128,7 @@ export default function SignUpScreen() {
             type: 'signup',
             email: trimmedEmail,
             options: {
-              emailRedirectTo: 'seen://auth/confirm',
+              emailRedirectTo: authRedirectUrl(),
             },
           });
           setResendSuccess(true);
@@ -168,7 +169,7 @@ export default function SignUpScreen() {
         type: 'signup',
         email: email.trim(),
         options: {
-          emailRedirectTo: 'seen://auth/confirm',
+          emailRedirectTo: authRedirectUrl(),
         },
       });
       if (!error) {

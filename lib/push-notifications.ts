@@ -27,6 +27,9 @@ export interface PushToken {
  * Returns null if permission denied or on simulator
  */
 export async function registerForPushNotifications(): Promise<string | null> {
+  // No push on the website: it would prompt for browser notifications, then fail to get an Expo token
+  if (Platform.OS === 'web') return null;
+
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
     console.log('Push notifications require a physical device');

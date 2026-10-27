@@ -9,6 +9,7 @@ import {
   savePushToken,
   removePushToken,
 } from './push-notifications';
+import { authRedirectUrl } from '@/lib/links';
 
 interface AuthContextType {
   session: Session | null;
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: normalizedEmail,
       password,
       options: {
-        emailRedirectTo: 'seen://auth/confirm',
+        emailRedirectTo: authRedirectUrl(),
         data: {
           username: trimmedUsername,
           display_name: trimmedDisplayName || null,

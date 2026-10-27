@@ -6,7 +6,6 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
-  Share,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
@@ -24,6 +23,7 @@ import { getUserActivities, isActivityInProgress } from '@/lib/activity';
 import { useUserData } from '@/lib/hooks/useUserData';
 import { getProfileInsights, ProfileInsights } from '@/lib/profile-insights';
 import { User, Activity } from '@/types';
+import { shareProfileLink } from '@/lib/links';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -165,9 +165,7 @@ export default function ProfileScreen() {
 
   const handleShareProfile = async () => {
     if (!user) return;
-    await Share.share({
-      message: `seen://user/${user.id}`,
-    });
+    await shareProfileLink(user.id);
   };
 
   const dismissFeedbackNudge = async () => {

@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   Pressable,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,7 @@ import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/the
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/alert';
 
 type ActiveSection = 'menu' | 'email' | 'password';
 
@@ -41,7 +41,7 @@ export default function AccountScreen() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    showAlert(
       'Delete Account',
       'Are you sure you want to permanently delete your account?\n\nAll your reviews, rankings, watchlist items, and social connections will be permanently deleted. This action cannot be undone.',
       [
@@ -52,7 +52,7 @@ export default function AccountScreen() {
   };
 
   const confirmDeleteAccount = () => {
-    Alert.alert(
+    showAlert(
       'Final Confirmation',
       'This will permanently delete your account and all your data.',
       [
@@ -72,7 +72,7 @@ export default function AccountScreen() {
 
     if (error) {
       setIsDeleting(false);
-      Alert.alert('Error', 'Failed to delete account. Please try again.');
+      showAlert('Error', 'Failed to delete account. Please try again.');
     }
   };
 
@@ -101,7 +101,7 @@ export default function AccountScreen() {
     if (error) {
       setEmailError(error.message);
     } else {
-      Alert.alert(
+      showAlert(
         'Confirmation Sent',
         'A confirmation link has been sent to your new email address. Please check your inbox to complete the change.',
         [{ text: 'OK', onPress: () => setActiveSection('menu') }]
@@ -137,7 +137,7 @@ export default function AccountScreen() {
     if (error) {
       setPasswordError(error.message);
     } else {
-      Alert.alert('Success', 'Your password has been updated.', [
+      showAlert('Success', 'Your password has been updated.', [
         { text: 'OK', onPress: () => setActiveSection('menu') },
       ]);
       setNewPassword('');

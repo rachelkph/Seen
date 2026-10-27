@@ -29,6 +29,7 @@ import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { CacheProvider } from '@/lib/cache-context';
 import { useAppUpdate } from '@/lib/hooks/useAppUpdate';
 import { UpdatePromptModal } from '@/components/update-prompt-modal';
+import { PhoneWidthFrame } from '@/components/phone-width-frame';
 import { Colors } from '@/constants/theme';
 import 'react-native-reanimated';
 
@@ -74,8 +75,10 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    // Email confirmation links open this screen before you're signed in; let it finish verifying.
+    const isConfirmingEmail = segments[0] === 'auth-confirm';
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !isConfirmingEmail) {
       router.replace('/(auth)');
     } else if (session && inAuthGroup) {
       // Don't redirect away from reset-password (user needs to set new password after recovery)
@@ -355,7 +358,9 @@ export default Sentry.wrap(function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <CacheProvider>
           <AuthProvider>
-            <RootLayoutNav />
+            <PhoneWidthFrame>
+              <RootLayoutNav />
+            </PhoneWidthFrame>
           </AuthProvider>
         </CacheProvider>
       </GestureHandlerRootView>

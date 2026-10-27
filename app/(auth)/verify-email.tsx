@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { authRedirectUrl } from '@/lib/links';
 
 const RESEND_COOLDOWN_MS = 60000; // 60 seconds
 
@@ -53,7 +54,7 @@ export default function VerifyEmailScreen() {
         type: 'signup',
         email: trimmedEmail,
         options: {
-          emailRedirectTo: 'seen://auth/confirm',
+          emailRedirectTo: authRedirectUrl(),
         },
       });
 

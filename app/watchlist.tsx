@@ -6,7 +6,6 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -16,6 +15,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Movie } from '@/types';
+import { showAlert } from '@/lib/alert';
 
 interface BookmarkedMovie extends Movie {
   bookmarked_at: string;
@@ -90,7 +90,7 @@ export default function WatchlistScreen() {
   const handleRemoveBookmark = (contentId: number, title: string) => {
     if (!isOwnWatchlist) return;
 
-    Alert.alert(
+    showAlert(
       'Remove from Watchlist',
       `Remove "${title}" from your watchlist?`,
       [

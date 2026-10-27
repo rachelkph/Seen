@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { useRouter } from 'expo-router';
@@ -21,6 +20,7 @@ import { ProfileAvatar } from '@/components/profile-avatar';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { checkUsernameAvailable } from '@/lib/validation';
+import { showAlert } from '@/lib/alert';
 
 export default function EditProfileModal() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function EditProfileModal() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert('Permission Required', 'Please allow access to your photo library to change your profile picture.');
+      showAlert('Permission Required', 'Please allow access to your photo library to change your profile picture.');
       return;
     }
 
@@ -97,14 +97,6 @@ export default function EditProfileModal() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append('', {
-        uri: localImageUri,
-        name: 'avatar.jpg',
-        type: 'image/jpeg',
-      } as unknown as Blob);
-
       // Upload via direct fetch with proper auth
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 
@@ -116,7 +108,7 @@ export default function EditProfileModal() {
             Authorization: `Bearer ${session.access_token}`,
             'x-upsert': 'true',
           },
-          body: formData,
+          body: await avatarUploadBody(localImageUri),
         }
       );
 
@@ -133,7 +125,7 @@ export default function EditProfileModal() {
       return `${urlData.publicUrl}?t=${Date.now()}`;
     } catch (error) {
       console.error('Error uploading image:', error);
-      Alert.alert('Upload Failed', 'Could not upload your profile picture. Please try again.');
+      showAlert('Upload Failed', 'Could not upload your profile picture. Please try again.');
       return null;
     }
   };
@@ -197,7 +189,7 @@ export default function EditProfileModal() {
         if (error.message?.includes('username')) {
           setUsernameError('This username is already taken');
         } else {
-          Alert.alert('Error', 'Could not save your profile. Please try again.');
+          showAlert('Error', 'Could not save your profile. Please try again.');
         }
         return;
       }
@@ -205,7 +197,7 @@ export default function EditProfileModal() {
       router.back();
     } catch (error) {
       console.error('Error saving profile:', error);
-      Alert.alert('Error', 'Could not save your profile. Please try again.');
+      showAlert('Error', 'Could not save your profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -473,3 +465,19 @@ const styles = StyleSheet.create({
     color: Colors.paper,
   },
 });
+
+// Native uploads a file reference ({ uri, name, type }), which only React Native's FormData
+// understands. On the web the picked image is a blob: URL, so send the image bytes instead.
+async function avatarUploadBody(localImageUri: string): Promise<FormData | Blob> {
+  if (Platform.OS === 'web') {
+    const image = await fetch(localImageUri);
+    return image.blob();
+  }
+  const formData = new FormData();
+  formData.append('', {
+    uri: localImageUri,
+    name: 'avatar.jpg',
+    type: 'image/jpeg',
+  } as unknown as Blob);
+  return formData;
+}

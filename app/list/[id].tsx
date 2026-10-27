@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -16,6 +15,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/lib/auth-context';
 import { getListWithItems, deleteList, removeFromList } from '@/lib/user-lists';
 import { UserList, UserListItem } from '@/types';
+import { showAlert } from '@/lib/alert';
 
 export default function ListDetailScreen() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function ListDetailScreen() {
   };
 
   const handleDeleteList = () => {
-    Alert.alert(
+    showAlert(
       'Delete List',
       `Are you sure you want to delete "${list?.name}"? This cannot be undone.`,
       [
@@ -63,7 +63,7 @@ export default function ListDetailScreen() {
             if (success) {
               router.back();
             } else {
-              Alert.alert('Error', 'Failed to delete list');
+              showAlert('Error', 'Failed to delete list');
             }
           },
         },
@@ -72,7 +72,7 @@ export default function ListDetailScreen() {
   };
 
   const handleRemoveItem = (contentId: number, title: string) => {
-    Alert.alert(
+    showAlert(
       'Remove from List',
       `Remove "${title}" from this list?`,
       [

@@ -6,7 +6,6 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Image } from 'expo-image';
@@ -23,6 +22,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types';
+import { showAlert } from '@/lib/alert';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -121,7 +121,7 @@ export default function NotificationsScreen() {
           }
 
           // Activity was deleted — inform the user
-          Alert.alert('Not Available', 'This review is no longer available.');
+          showAlert('Not Available', 'This review is no longer available.');
           break;
         }
 

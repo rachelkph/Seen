@@ -32,7 +32,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     predictiveBackGestureEnabled: false,
   },
   web: {
-    output: 'static' as const,
+    // Single-page app: Seen is behind sign-in, so pre-rendering pages at build time adds nothing
+    // (and breaks: there's no browser storage during the build).
+    output: 'single' as const,
     favicon: './assets/images/favicon.png',
   },
   plugins: [

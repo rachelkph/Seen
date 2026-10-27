@@ -6,7 +6,6 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { useCache } from '@/lib/cache-context';
 import { reorderRankings, deleteRankingWithActivity } from '@/lib/ranking';
 import { DraggableRankList, RankedMovie } from '@/components/draggable-rank-list';
 import { ContentType } from '@/types';
+import { showAlert } from '@/lib/alert';
 
 export default function RankingsScreen() {
   const insets = useSafeAreaInsets();
@@ -217,7 +217,7 @@ export default function RankingsScreen() {
         await loadRankings();
       } catch (error) {
         console.error('Failed to save reorder:', error);
-        Alert.alert('Error', 'Failed to save new order. Please try again.');
+        showAlert('Error', 'Failed to save new order. Please try again.');
         await loadRankings();
       }
     },
@@ -232,7 +232,7 @@ export default function RankingsScreen() {
       const movie = rankings.find((r) => r.id === tmdbId);
       const title = movie?.title || 'this title';
 
-      Alert.alert(
+      showAlert(
         'Remove from Rankings',
         `Remove "${title}" from your rankings? This will also delete your review and rating.`,
         [
@@ -275,7 +275,7 @@ export default function RankingsScreen() {
                 invalidate('ranking_delete', user.id);
               } catch (error) {
                 console.error('Failed to delete ranking:', error);
-                Alert.alert('Error', 'Failed to remove from rankings. Please try again.');
+                showAlert('Error', 'Failed to remove from rankings. Please try again.');
                 await loadRankings();
               }
             },

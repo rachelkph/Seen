@@ -13,7 +13,6 @@ import {
   Animated as RNAnimated,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  Alert,
 } from 'react-native';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Image } from 'expo-image';
@@ -24,7 +23,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { DatePicker } from '@/components/date-picker';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
@@ -55,6 +54,7 @@ import { Activity, Watch } from '@/types';
 import { getMovieDetails, getTVShowDetails, getSeasonDetails } from '@/lib/tmdb';
 import { Content, ContentType, MovieDetails, TVShowDetails, Episode, ActivityStatus } from '@/types';
 import { deleteRankingWithActivity } from '@/lib/ranking';
+import { showAlert } from '@/lib/alert';
 
 type Step = 'watch_conflict' | 'status' | 'completed' | 'in_progress';
 
@@ -795,7 +795,7 @@ export default function LogActivityModal() {
     const type = content.content_type || params.contentType;
     if (!type) return;
 
-    Alert.alert(
+    showAlert(
       'Delete Review',
       'This will delete your review, rating, and remove this title from your rankings.',
       [
@@ -811,7 +811,7 @@ export default function LogActivityModal() {
               router.back();
             } catch (error) {
               console.error('Error deleting:', error);
-              Alert.alert('Error', 'Failed to delete. Please try again.');
+              showAlert('Error', 'Failed to delete. Please try again.');
             } finally {
               setIsSaving(false);
             }
@@ -824,7 +824,7 @@ export default function LogActivityModal() {
   const handleDeleteInProgress = () => {
     if (!user || !existingInProgress) return;
 
-    Alert.alert(
+    showAlert(
       'Delete Progress',
       'This will delete your in-progress activity for this title.',
       [
@@ -840,7 +840,7 @@ export default function LogActivityModal() {
               router.back();
             } catch (error) {
               console.error('Error deleting in-progress activity:', error);
-              Alert.alert('Error', 'Failed to delete. Please try again.');
+              showAlert('Error', 'Failed to delete. Please try again.');
             } finally {
               setIsSaving(false);
             }
@@ -1095,7 +1095,7 @@ export default function LogActivityModal() {
               <View style={styles.datePickerRow}>
                 {watchDate ? (
                   <>
-                    <DateTimePicker
+                    <DatePicker
                       value={watchDate}
                       mode="date"
                       display={Platform.OS === 'ios' ? 'compact' : 'default'}
@@ -1298,7 +1298,7 @@ export default function LogActivityModal() {
               <View style={styles.datePickerRow}>
                 {watchDate ? (
                   <>
-                    <DateTimePicker
+                    <DatePicker
                       value={watchDate}
                       mode="date"
                       display={Platform.OS === 'ios' ? 'compact' : 'default'}

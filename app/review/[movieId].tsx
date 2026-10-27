@@ -10,11 +10,10 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Image } from 'expo-image';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { DatePicker } from '@/components/date-picker';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
@@ -30,6 +29,7 @@ import { getPendingFriendSelection } from '@/lib/friend-picker-state';
 import { deleteRankingWithActivity } from '@/lib/ranking';
 import { getWatchDates, addWatchDate, removeWatchDate } from '@/lib/watch-history';
 import { Movie, Review, WatchHistoryEntry } from '@/types';
+import { showAlert } from '@/lib/alert';
 
 export default function ReviewModal() {
   const params = useLocalSearchParams<{
@@ -232,7 +232,7 @@ export default function ReviewModal() {
   const handleDelete = () => {
     if (!existingReview || !user || !movie) return;
 
-    Alert.alert(
+    showAlert(
       'Delete Review',
       'This will delete your review, rating, and remove this title from your rankings.',
       [
@@ -250,7 +250,7 @@ export default function ReviewModal() {
               router.back();
             } catch (error) {
               console.error('Error deleting review:', error);
-              Alert.alert('Error', 'Failed to delete review. Please try again.');
+              showAlert('Error', 'Failed to delete review. Please try again.');
             } finally {
               setIsSaving(false);
             }
@@ -416,7 +416,7 @@ export default function ReviewModal() {
           {/* Pending date selection with compact picker */}
           {showAddDate && (
             <View style={styles.addDateRow}>
-              <DateTimePicker
+              <DatePicker
                 value={newWatchDate}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'compact' : 'default'}

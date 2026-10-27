@@ -15,6 +15,7 @@ import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/the
 import { supabase } from '@/lib/supabase';
 import { normalizeEmail } from '@/lib/validation';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { authRedirectUrl } from '@/lib/links';
 
 const RESEND_COOLDOWN_MS = 60000;
 
@@ -62,7 +63,7 @@ export default function ForgotPasswordScreen() {
     try {
       const normalized = normalizeEmail(trimmed);
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalized, {
-        redirectTo: 'seen://auth/confirm',
+        redirectTo: authRedirectUrl(),
       });
 
       if (resetError) {
