@@ -1,6 +1,9 @@
 const PROD_ID = 'hsuydsuebluhycdeqghv';
 const DEV_ID = 'snrzwaqdhkqsnuwphxnz';
-const TOKEN = 'sbp_b5ab089e3a91fad6f8558a4d3b433ac738751fca';
+// Supabase personal access token: never hard-code it. Run with
+//   SUPABASE_ACCESS_TOKEN=... node scripts/migrate_to_dev.mjs
+const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
+if (!TOKEN) throw new Error('Set SUPABASE_ACCESS_TOKEN (Supabase → Account → Access Tokens).');
 const API = 'https://api.supabase.com/v1/projects';
 const BATCH_SIZE = 20;
 
