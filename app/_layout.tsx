@@ -30,6 +30,9 @@ import { CacheProvider } from '@/lib/cache-context';
 import { useAppUpdate } from '@/lib/hooks/useAppUpdate';
 import { UpdatePromptModal } from '@/components/update-prompt-modal';
 import { PhoneWidthFrame } from '@/components/phone-width-frame';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Platform } from 'react-native';
 import { Colors } from '@/constants/theme';
 import 'react-native-reanimated';
 
@@ -47,7 +50,22 @@ Sentry.init({
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
+// Web: areas around the centered columns use Seen's paper color instead of React Navigation's grey.
+const WEB_NAV_THEME = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: Colors.background } };
+
+// Centered reading column for non-tab pages on wide screens (the tabs bring their own sidebar layout).
+const DESKTOP_PAGE_STYLE = {
+  backgroundColor: Colors.background,
+  width: '100%',
+  maxWidth: 760,
+  alignSelf: 'center',
+  borderLeftWidth: 1,
+  borderRightWidth: 1,
+  borderColor: Colors.borderLight,
+} as const;
+
 function RootLayoutNav() {
+  const isDesktop = useIsDesktop();
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -191,18 +209,19 @@ function RootLayoutNav() {
     return <LoadingScreen />;
   }
 
-  return (
+  const navigator = (
     <>
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
+          // Wide-screen web: pages outside the tabs (title, settings, ...) sit in a centered column.
+          contentStyle: isDesktop ? DESKTOP_PAGE_STYLE : { backgroundColor: Colors.background },
           animation: 'slide_from_right',
           animationDuration: 200,
         }}
       >
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" options={{ contentStyle: { backgroundColor: Colors.background } }} />
+        <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: Colors.background } }} />
         <Stack.Screen
           name="movie/[id]"
           options={{
@@ -320,6 +339,9 @@ function RootLayoutNav() {
       />
     </>
   );
+
+  if (Platform.OS !== 'web') return navigator;
+  return <ThemeProvider value={WEB_NAV_THEME}>{navigator}</ThemeProvider>;
 }
 
 export default Sentry.wrap(function RootLayout() {

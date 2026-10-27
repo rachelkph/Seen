@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Dimensions,
   Modal,
 } from 'react-native';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -31,8 +30,9 @@ import { useCache } from '@/lib/cache-context';
 import { getUserCompletedActivity, deleteActivity } from '@/lib/activity';
 import { supabase } from '@/lib/supabase';
 import { Movie, ContentType, Activity } from '@/types';
+import { designWidth } from '@/lib/layout';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SCREEN_WIDTH = designWidth();
 // Account for: horizontal padding (Spacing.xl each side), VS divider, and gaps (Spacing.md * 2)
 const VS_DIVIDER_WIDTH = 40;
 const CARD_WIDTH = (SCREEN_WIDTH - Spacing.xl * 2 - VS_DIVIDER_WIDTH - Spacing.md * 2) / 2;

@@ -5,6 +5,7 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -132,7 +133,7 @@ export function VideoSpotlight({
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
+    width: Platform.OS === 'web' ? '100%' : SCREEN_WIDTH, // web: fill the content column
     height: SPOTLIGHT_HEIGHT,
     backgroundColor: Colors.black,
     position: 'relative',

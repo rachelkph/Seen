@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 import { Movie, TVShow, ContentType } from '@/types';
+import { designWidth } from '@/lib/layout';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SCREEN_WIDTH = designWidth();
 
 // Calculate available width after padding
 const CONTENT_WIDTH = SCREEN_WIDTH - Spacing.xl * 2;
