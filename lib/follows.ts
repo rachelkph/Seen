@@ -279,19 +279,8 @@ export async function getUserRankingPosition(userId: string): Promise<number | n
   const cached = cache.get<number | null>(cacheKey);
   if (cached !== null) return cached;
 
-  // Get all users' rankings counts
-  const { data: allRankings, error } = await supabase
-    .from('rankings')
-    .select('user_id');
-
-  if (error || !allRankings) return null;
-
-  // Count rankings per user
-  const rankingsCountMap = new Map<string, number>();
-  allRankings.forEach((r) => {
-    const count = rankingsCountMap.get(r.user_id) || 0;
-    rankingsCountMap.set(r.user_id, count + 1);
-  });
+  const rankingsCountMap = await getRankingCounts();
+  if (!rankingsCountMap) return null;
 
   // Get the target user's count
   const userCount = rankingsCountMap.get(userId);
@@ -404,6 +393,19 @@ interface ReviewWithMovie extends Review {
   movies: Movie;
 }
 
+// Rankings per user, counted by the database (see migration 035_ranking_counts.sql).
+// Downloading the rows to count them here stops working past the 1,000-row request limit.
+async function getRankingCounts(): Promise<Map<string, number> | null> {
+  const { data, error } = await supabase.rpc('ranking_counts');
+  if (error || !data) return null;
+
+  const counts = new Map<string, number>();
+  for (const row of data as { user_id: string; rankings_count: number | string }[]) {
+    counts.set(row.user_id, Number(row.rankings_count));
+  }
+  return counts;
+}
+
 // Get top users ranked by total rankings (movies + TV shows) in descending order
 export async function getTopRankedUsers(
   currentUserId: string,
@@ -424,19 +426,8 @@ export async function getTopRankedUsers(
 
   if (error || !users || users.length === 0) return [];
 
-  // Get rankings count for each user
-  const userIds = users.map((u) => u.id);
-  const { data: rankings } = await supabase
-    .from('rankings')
-    .select('user_id')
-    .in('user_id', userIds);
-
-  // Count rankings per user
-  const rankingsCountMap = new Map<string, number>();
-  rankings?.forEach((r) => {
-    const count = rankingsCountMap.get(r.user_id) || 0;
-    rankingsCountMap.set(r.user_id, count + 1);
-  });
+  const rankingsCountMap = await getRankingCounts();
+  if (!rankingsCountMap) return [];
 
   // Sort users by rankings count (descending)
   const sortedUsers = users
